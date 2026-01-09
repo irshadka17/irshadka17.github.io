@@ -7,8 +7,15 @@ OUTPUT_FILE = "_data/scholar.json"
 
 print("Reading local snapshot:", INPUT_FILE)
 
-with open(INPUT_FILE, "r", encoding="utf-8") as f:
-    html = f.read()
+# ---------------------------
+# Load local Scholar snapshot
+# ---------------------------
+try:
+    with open(INPUT_FILE, "r", encoding="utf-8") as f:
+        html = f.read()
+except FileNotFoundError:
+    print("ERROR: Snapshot file not found:", INPUT_FILE)
+    exit(1)
 
 soup = BeautifulSoup(html, "lxml")
 
@@ -46,23 +53,25 @@ publications = []
 rows = soup.find_all("tr", class_="gsc_a_tr")
 
 for row in rows:
+    # Title
     title_tag = row.find("a", class_="gsc_a_at")
     if not title_tag:
         continue
-
     title = title_tag.text.strip()
 
+    # Citations
     cit_tag = row.find("a", class_="gsc_a_ac")
     cited_by = int(cit_tag.text.strip()) if cit_tag and cit_tag.text.strip().isdigit() else 0
 
-   year_tag = row.find("span", class_="gsc_a_h gsc_a_hc gs_ibl")
-   year = int(year_tag.text.strip()) if year_tag and year_tag.text.strip().isdigit() else None
+    # Year
+    year_tag = row.find("span", class_="gsc_a_h gsc_a_hc gs_ibl")
+    year = int(year_tag.text.strip()) if year_tag and year_tag.text.strip().isdigit() else None
 
-   publications.append({
-    "title": title,
-    "cited_by": cited_by,
-    "year": year
-   })
+    publications.append({
+        "title": title,
+        "cited_by": cited_by,
+        "year": year
+    })
 
 # ---------------------------
 # Save JSON
