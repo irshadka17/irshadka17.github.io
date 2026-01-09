@@ -7,12 +7,18 @@ title: Home
 
 I am a beamline scientist at Elettra Sincrotrone Trieste, working on high-pressure X-ray diffraction, synchrotron-based materials research, and scientific software development.
 Experienced researcher specializing in advanced X-ray diffraction studies under extreme conditions. My work focuses on carrying out high-pressure, high/low-temperature experiments on various materials, leading to novel discoveries in materials science.
+
 A key aspect of my professional experience involves developing novel experimental techniques for diamond anvil cell (DAC) based studies, pushing the boundaries of what is possible in extreme conditions research.
+
 I have extensive experience in user support, serving as the local contact for supporting users conducting synchrotron experiments involving extreme condition X-ray diffraction measurements.
+
 Additionally, I manage significant operational responsibilities at the beamline, which include:
 Preparing and documenting monthly and yearly beamline reports.
+
 Conducting technical evaluations of research proposals.
+
 Overseeing the periodic maintenance of beamline facilities.
+
 My expertise in both the technical execution of complex experiments and the operational management of a major scientific facility makes me a versatile and valuable asset to any research team.
 ---
 
@@ -57,4 +63,5 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
       "<p>Error loading publications.</p>";
   });
 </script>
+
 
