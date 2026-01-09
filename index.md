@@ -7,6 +7,7 @@ title: Home
 
   <!-- LEFT COLUMN -->
   <div class="left-column">
+<div class="left-column" markdown="1">
 
 ## Welcome
 
@@ -24,7 +25,7 @@ Additionally, I manage significant operational responsibilities at the beamline,
 
 My expertise in both the technical execution of complex experiments and the operational management of a major scientific facility makes me a versatile and valuable asset to any research team.
 
----
+<hr>
 
 ## Recent Publications
 
@@ -128,3 +129,4 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
   </div> <!-- END RIGHT COLUMN -->
 
 </div> <!-- END TWO COLUMN -->
+
