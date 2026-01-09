@@ -13,6 +13,7 @@ A key aspect of my professional experience involves developing novel experimenta
 I have extensive experience in user support, serving as the local contact for supporting users conducting synchrotron experiments involving extreme condition X-ray diffraction measurements.
 
 Additionally, I manage significant operational responsibilities at the beamline, which include:
+
 Preparing and documenting monthly and yearly beamline reports.
 
 Conducting technical evaluations of research proposals.
@@ -64,6 +65,7 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
       "<p>Error loading publications.</p>";
   });
 </script>
+
 
 
 
