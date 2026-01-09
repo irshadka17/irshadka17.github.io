@@ -65,6 +65,54 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
   });
 </script>
 
+## Contact
+
+<div class="contact-card">
+  <ul class="contact-list">
+
+    <li>
+      <span class="icon">📧</span>
+      <a href="mailto:{{ site.email_primary }}">{{ site.email_primary }}</a>
+    </li>
+
+    <li>
+      <span class="icon">📧</span>
+      <a href="mailto:{{ site.email_secondary }}">{{ site.email_secondary }}</a>
+    </li>
+
+    <li>
+      <span class="icon">📱</span>
+      {{ site.mobile_primary }}
+    </li>
+
+    <li>
+      <span class="icon">📱</span>
+      {{ site.mobile_secondary }}
+    </li>
+
+    <li>
+      <span class="icon">🐙</span>
+      <a href="{{ site.github }}" target="_blank">GitHub</a>
+    </li>
+
+    <li>
+      <span class="icon">🔗</span>
+      <a href="{{ site.linkedin }}" target="_blank">LinkedIn</a>
+    </li>
+
+    <li>
+      <span class="icon">🟢</span>
+      <a href="{{ site.orcid }}" target="_blank">ORCID</a>
+    </li>
+
+    <li>
+      <span class="icon">📘</span>
+      <a href="{{ site.researchgate }}" target="_blank">ResearchGate</a>
+    </li>
+
+  </ul>
+</div>
+
 
 
 
