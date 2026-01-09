@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import re
 
 INPUT_FILE = "_data/scholar.html"
-OUTPUT_FILE = "_data/scholar.json"
+OUTPUT_FILE = "assets/data/scholar.json"
 
 print("Reading local snapshot:", INPUT_FILE)
 
