@@ -72,8 +72,6 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
   <!-- RIGHT COLUMN -->
   <div class="right-column" markdown="1">
 
-## Profile
-
 <div class="profile-photo-container">
   <img src="{{ '/assets/images/profile.jpg' | relative_url }}" alt="Profile photo" class="profile-photo">
 </div>
@@ -129,4 +127,5 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
   </div> <!-- END RIGHT COLUMN -->
 
 </div> <!-- END TWO COLUMN -->
+
 
