@@ -1,32 +1,14 @@
-import requests
-from bs4 import BeautifulSoup
 import json
+from bs4 import BeautifulSoup
 import re
-import os
 
-USER_ID = "3aPgewgAAAAJ"
-URL = f"https://scholar.google.com/citations?user={USER_ID}&hl=en&view_op=list_works&sortby=pubdate"
+INPUT_FILE = "_data/scholar.html"
+OUTPUT_FILE = "_data/scholar.json"
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9"
-}
+print("Reading local snapshot:", INPUT_FILE)
 
-print("Fetching Google Scholar page...")
-html = requests.get(URL, headers=headers).text
-
-# Detect CAPTCHA or block
-if "gs_captcha" in html or "Please show you're not a robot" in html:
-    print("Google Scholar blocked the request. Using fallback data.")
-    # Keep existing JSON instead of failing
-    if os.path.exists("_data/scholar.json"):
-        print("Keeping existing _data/scholar.json")
-        exit(0)
-    else:
-        print("No existing data. Writing empty fallback.")
-        with open("_data/scholar.json", "w") as f:
-            json.dump({"metrics": {}, "publications": []}, f, indent=2)
-        exit(0)
+with open(INPUT_FILE, "r", encoding="utf-8") as f:
+    html = f.read()
 
 soup = BeautifulSoup(html, "lxml")
 
@@ -36,14 +18,8 @@ soup = BeautifulSoup(html, "lxml")
 metrics_table = soup.find("table", id="gsc_rsb_st")
 
 if not metrics_table:
-    print("Metrics table not found. Scholar may have changed layout.")
-    # Do not fail — keep old data
-    if os.path.exists("_data/scholar.json"):
-        exit(0)
-    else:
-        with open("_data/scholar.json", "w") as f:
-            json.dump({"metrics": {}, "publications": []}, f, indent=2)
-        exit(0)
+    print("ERROR: Metrics table not found in snapshot.")
+    exit(1)
 
 cells = metrics_table.find_all("td", class_="gsc_rsb_std")
 
@@ -97,7 +73,7 @@ data = {
     "publications": publications
 }
 
-with open("_data/scholar.json", "w") as f:
+with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
     json.dump(data, f, indent=2)
 
-print("Saved to _data/scholar.json")
+print("Saved parsed data to", OUTPUT_FILE)
