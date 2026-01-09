@@ -1,5 +1,12 @@
 title: "Irshad – Research Website"
-description: "Beamline Scientist | Elettra-Sincrotrone Trieste | High-Pressure XRD | Synchrotron Methods"
+
+description: |
+  Scientist (IISc/ICTP)
+  High pressure diffraction beamline: Xpress
+  Elettra Sincrotrone Trieste S.C.p.A.
+  S.S. 14 Km 163,5 in Area Science Park
+  34149 Basovizza, Trieste, Italy
+
 theme: null
 markdown: kramdown
 
@@ -14,5 +21,6 @@ github: "https://github.com/irshadka17"
 linkedin: "https://it.linkedin.com/in/irshad-k-a-359a53103"
 orcid: "https://orcid.org/0000-0002-2790-6430"
 researchgate: "https://www.researchgate.net/profile/Irshad-K-A"
+
 
 
