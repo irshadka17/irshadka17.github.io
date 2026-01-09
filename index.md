@@ -20,6 +20,7 @@ Conducting technical evaluations of research proposals.
 Overseeing the periodic maintenance of beamline facilities.
 
 My expertise in both the technical execution of complex experiments and the operational management of a major scientific facility makes me a versatile and valuable asset to any research team.
+
 ---
 
 ## Recent Publications
@@ -63,5 +64,6 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
       "<p>Error loading publications.</p>";
   });
 </script>
+
 
 
