@@ -14,6 +14,11 @@ I am a beamline scientist at Elettra Sincrotrone Trieste, working on high-pressu
 <div id="recentPubs"></div>
 
 <script>
+  console.log("TEST: Inline script is running");
+  document.getElementById("recentPubs").innerHTML = "<p>Script executed.</p>";
+</script>
+
+<script>
 fetch("{{ '/_data/scholar.json' | relative_url }}")
   .then(response => response.json())
   .then(data => {
@@ -55,3 +60,4 @@ fetch("{{ '/_data/scholar.json' | relative_url }}")
       "<p>Error loading publications.</p>";
   });
 </script>
+
