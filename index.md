@@ -70,7 +70,7 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
 
 
   <!-- RIGHT COLUMN -->
-  <div class="right-column">
+  <div class="right-column" markdown="1">
 
 ## Profile
 
@@ -129,3 +129,4 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
   </div> <!-- END RIGHT COLUMN -->
 
 </div> <!-- END TWO COLUMN -->
+
