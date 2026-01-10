@@ -81,6 +81,9 @@ function renderPublication(pub) {
       <h3>${pub.title}</h3>
       <p><strong>Authors:</strong> ${pub.authors}</p>
       <p><strong>Journal:</strong> ${pub.journal} (${pub.year})</p>
+      <p><strong>Volume:</strong> ${pub.volume || '—'}  
+         <strong>Issue:</strong> ${pub.issue || '—'}  
+         <strong>Pages:</strong> ${pub.pages || '—'}</p>
       <p><strong>Citations:</strong> ${pub.citations}</p>
       <p><a href="https://doi.org/${pub.doi}" target="_blank">DOI: ${pub.doi}</a></p>
     </div>
@@ -158,6 +161,9 @@ async function loadPublications() {
       const title = meta.title ? meta.title[0] : 'Untitled';
       const journal = meta['container-title'] ? meta['container-title'][0] : 'Unknown journal';
       const year = meta.issued ? meta.issued['date-parts'][0][0] : '—';
+      const volume = meta.volume || '';
+      const issue = meta.issue || '';
+      const pages = meta.page || '';
 
       years.add(year);
 
@@ -166,6 +172,9 @@ async function loadPublications() {
         authors,
         journal,
         year,
+        volume,
+        issue,
+        pages,
         citations,
         doi
       });
