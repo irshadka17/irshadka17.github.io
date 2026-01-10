@@ -5,6 +5,8 @@ title: Publications
 
 # Publications
 
+### Peer Reviewed Journal Publications
+
 <p>This page loads publication metadata directly from DOIs.  
 Update <code>assets/dois.txt</code> to add new papers.</p>
 
@@ -187,3 +189,4 @@ loadPublications();
   padding: 4px 8px;
 }
 </style>
+
