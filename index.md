@@ -34,11 +34,15 @@ My expertise in both the technical execution of complex experiments and the oper
 
 
 <script>
-fetch("{{ '/assets/data/scholar.json' | relative_url }}")
+fetch("{{ '/assets/data/publications.json' | relative_url }}")
   .then(response => response.json())
   .then(data => {
     const pubs = data.publications || [];
+
+    // Filter valid entries with a year
     const valid = pubs.filter(p => p.year);
+
+    // Sort by year (descending) and take top 5
     const recent = valid.sort((a, b) => b.year - a.year).slice(0, 5);
 
     const container = document.getElementById("recentPubs");
@@ -49,15 +53,56 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
       return;
     }
 
-    recent.forEach(pub => {
-      const encodedTitle = encodeURIComponent(pub.title);
-      const scholarLink = `https://scholar.google.com/scholar?q=${encodedTitle}`;
+    recent.forEach((pub, index) => {
+      const doiLink = pub.doi
+        ? `<a href="https://doi.org/${pub.doi}" target="_blank">${pub.doi}</a>`
+        : "—";
+
+      const volume = pub.volume || "—";
+      const issue = pub.issue || "—";
+      const pages = pub.pages || "—";
+      const authors = pub.authors || "—";
 
       container.innerHTML += `
         <div class="pub-card" style="margin-bottom: 1rem;">
-          <h3><a href="${scholarLink}" target="_blank">${pub.title}</a></h3>
-          <p><strong>${pub.year}</strong></p>
-          <p><span class="badge">Cited by ${pub.cited_by}</span></p>
+
+          <h3 style="margin-bottom: 0.3rem;">
+            <span style="
+              display: inline-block;
+              width: 28px;
+              text-align: right;
+              margin-right: 8px;
+              font-weight: bold;
+            ">
+              ${index + 1}.
+            </span>
+            ${pub.title}
+          </h3>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>Authors:</strong> ${authors}
+          </p>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>Year:</strong> ${pub.year}
+          </p>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>Journal:</strong> ${pub.journal || "—"}
+          </p>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>Volume:</strong> ${volume}
+            &nbsp;&nbsp;
+            <strong>Issue:</strong> ${issue}
+            &nbsp;&nbsp;
+            <strong>Pages:</strong> ${pages}
+          </p>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>DOI:</strong> ${doiLink}
+          </p>
+
         </div>
       `;
     });
@@ -127,5 +172,6 @@ fetch("{{ '/assets/data/scholar.json' | relative_url }}")
   </div> <!-- END RIGHT COLUMN -->
 
 </div> <!-- END TWO COLUMN -->
+
 
 
