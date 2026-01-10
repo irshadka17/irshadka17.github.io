@@ -39,16 +39,16 @@ async function loadRecentFromDOIs() {
   container.innerHTML = "Loading…";
 
   try {
-    // Load dois.txt
-    const doiResponse = await fetch("{{ '/assets/data/dois.txt' | relative_url }}");
+    // Load dois.txt from data/
+    const doiResponse = await fetch("{{ '/data/dois.txt' | relative_url }}");
     const doiText = await doiResponse.text();
     const dois = doiText
       .split("\n")
       .map(d => d.trim())
       .filter(d => d.length > 0);
 
-    // Load publications.json
-    const pubResponse = await fetch("{{ '/assets/data/publications.json' | relative_url }}");
+    // Load publications.json from data/js/
+    const pubResponse = await fetch("{{ '/data/js/publications.json' | relative_url }}");
     const pubData = await pubResponse.json();
     const pubs = pubData.publications || [];
 
@@ -185,6 +185,7 @@ loadRecentFromDOIs();
   </div> <!-- END RIGHT COLUMN -->
 
 </div> <!-- END TWO COLUMN -->
+
 
 
 
