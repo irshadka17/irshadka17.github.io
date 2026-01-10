@@ -33,7 +33,7 @@ My expertise in both the technical execution of complex experiments and the oper
   </div> <!-- END LEFT COLUMN -->
 
 
-<!-- ⭐ CLEAN HOMEPAGE SCRIPT (NO publications.js) -->
+<!-- ⭐ CLEAN HOMEPAGE SCRIPT WITH IOP VANCOUVER FORMAT -->
 <script>
 async function loadRecentPublications() {
   const container = document.getElementById("recentPubs");
@@ -100,6 +100,15 @@ async function loadRecentPublications() {
     publications.forEach((pub, index) => {
       const doiLink = `<a href="https://doi.org/${pub.doi}" target="_blank">${pub.doi}</a>`;
 
+      // Build IOP Vancouver reference line
+      const refLine = `
+        ${pub.journal}
+        ${pub.volume !== "—" ? pub.volume : ""}
+        ${pub.issue !== "—" ? `(${pub.issue})` : ""}
+        ${pub.pages !== "—" ? `:${pub.pages}` : ""}
+        ${pub.year !== "—" ? ` (${pub.year})` : ""}
+      `.replace(/\s+/g, " ").trim();
+
       container.innerHTML += `
         <div class="pub-card" style="margin-bottom: 1rem;">
 
@@ -123,20 +132,9 @@ async function loadRecentPublications() {
             <strong>Authors:</strong> ${pub.authors}
           </p>
 
+          <!-- ⭐ IOP Vancouver formatted reference line -->
           <p style="margin: 0.2rem 0;">
-            <strong>Year:</strong> ${pub.year}
-          </p>
-
-          <p style="margin: 0.2rem 0;">
-            <strong>Journal:</strong> ${pub.journal}
-          </p>
-
-          <p style="margin: 0.2rem 0;">
-            <strong>Volume:</strong> ${pub.volume}
-            &nbsp;&nbsp;
-            <strong>Issue:</strong> ${pub.issue}
-            &nbsp;&nbsp;
-            <strong>Pages:</strong> ${pub.pages}
+            <strong>Ref:</strong> ${refLine}
           </p>
 
           <p style="margin: 0.2rem 0;">
