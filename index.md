@@ -33,94 +33,125 @@ My expertise in both the technical execution of complex experiments and the oper
   </div> <!-- END LEFT COLUMN -->
 
 
-<script src="{{ '/assets/js/publications.js' | relative_url }}"></script>
-
+<!-- ⭐ CLEAN HOMEPAGE SCRIPT (NO publications.js) -->
 <script>
 async function loadRecentPublications() {
   const container = document.getElementById("recentPubs");
   container.innerHTML = "Loading…";
 
-  // Wait until publications.js finishes building the publications array
-  while (!window.publications || window.publications.length === 0) {
-    await new Promise(resolve => setTimeout(resolve, 100));
+  try {
+    // Load DOIs from /assets/dois.txt
+    const doiResponse = await fetch("{{ '/assets/dois.txt' | relative_url }}");
+    const doiText = await doiResponse.text();
+    const dois = doiText
+      .split("\n")
+      .map(d => d.trim())
+      .filter(d => d.length > 0)
+      .slice(0, 5); // Only first 5 DOIs
+
+    const publications = [];
+
+    // Fetch metadata for each DOI from CrossRef
+    for (const doi of dois) {
+      try {
+        const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        const cr = data.message;
+
+        const title = cr.title ? cr.title[0] : "Untitled";
+        const authors = cr.author
+          ? cr.author.map(a => `${a.given} ${a.family}`).join(", ")
+          : "Unknown authors";
+        const journal = cr["container-title"]
+          ? cr["container-title"][0]
+          : "Unknown journal";
+        const year = cr.issued
+          ? cr.issued["date-parts"][0][0]
+          : "—";
+        const volume = cr.volume || "—";
+        const issue = cr.issue || "—";
+        const pages = cr.page || "—";
+
+        publications.push({
+          title,
+          authors,
+          journal,
+          year,
+          volume,
+          issue,
+          pages,
+          doi
+        });
+
+      } catch (err) {
+        console.error("Error fetching DOI:", doi, err);
+      }
+    }
+
+    container.innerHTML = "";
+
+    if (publications.length === 0) {
+      container.innerHTML = "<p>No recent publications found.</p>";
+      return;
+    }
+
+    // Render the 5 publications
+    publications.forEach((pub, index) => {
+      const doiLink = `<a href="https://doi.org/${pub.doi}" target="_blank">${pub.doi}</a>`;
+
+      container.innerHTML += `
+        <div class="pub-card" style="margin-bottom: 1rem;">
+
+          <h3 style="margin-bottom: 0.3rem;">
+            <span style="
+              display: inline-block;
+              width: 28px;
+              text-align: right;
+              margin-right: 8px;
+              font-weight: bold;
+            ">
+              ${index + 1}.
+            </span>
+            ${pub.title}
+          </h3>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>Authors:</strong> ${pub.authors}
+          </p>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>Year:</strong> ${pub.year}
+          </p>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>Journal:</strong> ${pub.journal}
+          </p>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>Volume:</strong> ${pub.volume}
+            &nbsp;&nbsp;
+            <strong>Issue:</strong> ${pub.issue}
+            &nbsp;&nbsp;
+            <strong>Pages:</strong> ${pub.pages}
+          </p>
+
+          <p style="margin: 0.2rem 0;">
+            <strong>DOI:</strong> ${doiLink}
+          </p>
+
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    container.innerHTML = "<p>Error loading publications.</p>";
   }
-
-  // Load DOIs from /assets/dois.txt
-  const doiResponse = await fetch("{{ '/assets/dois.txt' | relative_url }}");
-  const doiText = await doiResponse.text();
-  const dois = doiText
-    .split("\n")
-    .map(d => d.trim())
-    .filter(d => d.length > 0);
-
-  // Match DOIs in order
-  const matched = [];
-  dois.forEach(doi => {
-    const pub = window.publications.find(p => p.doi === doi);
-    if (pub) matched.push(pub);
-  });
-
-  const recent = matched.slice(0, 5);
-
-  container.innerHTML = "";
-
-  if (recent.length === 0) {
-    container.innerHTML = "<p>No recent publications found.</p>";
-    return;
-  }
-
-  recent.forEach((pub, index) => {
-    const doiLink = pub.doi
-      ? `<a href="https://doi.org/${pub.doi}" target="_blank">${pub.doi}</a>`
-      : "—";
-
-    container.innerHTML += `
-      <div class="pub-card" style="margin-bottom: 1rem;">
-
-        <h3 style="margin-bottom: 0.3rem;">
-          <span style="
-            display: inline-block;
-            width: 28px;
-            text-align: right;
-            margin-right: 8px;
-            font-weight: bold;
-          ">
-            ${index + 1}.
-          </span>
-          ${pub.title}
-        </h3>
-
-        <p style="margin: 0.2rem 0;">
-          <strong>Authors:</strong> ${pub.authors}
-        </p>
-
-        <p style="margin: 0.2rem 0;">
-          <strong>Year:</strong> ${pub.year}
-        </p>
-
-        <p style="margin: 0.2rem 0;">
-          <strong>Journal:</strong> ${pub.journal}
-        </p>
-
-        <p style="margin: 0.2rem 0;">
-          <strong>Volume:</strong> ${pub.volume || "—"}
-          &nbsp;&nbsp;
-          <strong>Issue:</strong> ${pub.issue || "—"}
-          &nbsp;&nbsp;
-          <strong>Pages:</strong> ${pub.pages || "—"}
-        </p>
-
-        <p style="margin: 0.2rem 0;">
-          <strong>DOI:</strong> ${doiLink}
-        </p>
-
-      </div>
-    `;
-  });
 }
 
 loadRecentPublications();
 </script>
+
 
   <!-- RIGHT COLUMN -->
   <div class="right-column" markdown="1">
@@ -180,10 +211,3 @@ loadRecentPublications();
   </div> <!-- END RIGHT COLUMN -->
 
 </div> <!-- END TWO COLUMN -->
-
-
-
-
-
-
-
