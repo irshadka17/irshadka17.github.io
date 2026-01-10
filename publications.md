@@ -1,236 +1,90 @@
 ---
-layout: default
+layout: page
 title: Publications
 ---
 
-## Metrics
+# Publications
 
-<div class="metrics-dashboard">
-    <div class="metric">
-        <h3>Total Citations</h3>
-        <p id="totalCitations">Loading…</p>
-    </div>
+<p>This page loads publication metadata directly from DOIs.  
+Update <code>dois.txt</code> to add new papers.</p>
 
-    <div class="metric">
-        <h3>h-index</h3>
-        <p id="hIndex">Loading…</p>
-    </div>
-
-    <div class="metric">
-        <h3>i10-index</h3>
-        <p id="i10Index">Loading…</p>
-    </div>
+<div id="pub-container">
+  <p>Loading publications…</p>
 </div>
-
-<p id="lastUpdated" style="opacity:0.7; font-size:0.9em;"></p>
-
----
-
-## Citations Over Time
-
-<canvas id="citationsChart" width="400" height="200"></canvas>
-
----
-
-## Publications
-
-<div class="pub-controls">
-    <label>Sort by:</label>
-    <select id="sortMode">
-        <option value="year">Year (Newest First)</option>
-        <option value="citations">Citations (Most First)</option>
-        <option value="title">Title (A–Z)</option>
-    </select>
-
-    <label style="margin-left:20px;">Filter by year:</label>
-    <select id="yearFilter">
-        <option value="all">All</option>
-    </select>
-
-    <label style="margin-left:20px;">Keyword:</label>
-    <input type="text" id="keywordFilter" placeholder="Search title or journal">
-</div>
-
-<div id="pubList"></div>
-
----
-
-## Recent Publications
-
-<div id="recentPubs"></div>
-
----
-
-## Scripts
 
 <script>
-// GLOBAL PUBLICATION LIST (loaded from scholar.json)
-let publications = [];
+// Load DOI list
+async function loadDOIs() {
+  const response = await fetch('/assets/dois.txt');
+  const text = await response.text();
+  return text.split('\n').map(d => d.trim()).filter(d => d.length > 0);
+}
 
-// Load publications from scholar.json
+// Fetch metadata from CrossRef
+async function fetchCrossRef(doi) {
+  const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  return data.message;
+}
+
+// Fetch citation count from OpenAlex
+async function fetchOpenAlex(doi) {
+  const url = `https://api.openalex.org/works/doi:${encodeURIComponent(doi)}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  return data.cited_by_count || 0;
+}
+
+// Render publication card
+function renderPublication(meta, citations) {
+  const authors = meta.author
+    ? meta.author.map(a => `${a.given} ${a.family}`).join(', ')
+    : 'Unknown authors';
+
+  const title = meta.title ? meta.title[0] : 'Untitled';
+  const journal = meta['container-title'] ? meta['container-title'][0] : 'Unknown journal';
+  const year = meta.issued ? meta.issued['date-parts'][0][0] : '—';
+  const doi = meta.DOI;
+
+  return `
+    <div class="pub-card">
+      <h3>${title}</h3>
+      <p><strong>Authors:</strong> ${authors}</p>
+      <p><strong>Journal:</strong> ${journal} (${year})</p>
+      <p><strong>Citations:</strong> ${citations}</p>
+      <p><a href="https://doi.org/${doi}" target="_blank">DOI: ${doi}</a></p>
+    </div>
+    <hr>
+  `;
+}
+
+// Main loader
 async function loadPublications() {
-    const response = await fetch("/assets/data/scholar.json");
-    const data = await response.json();
+  const container = document.getElementById('pub-container');
+  container.innerHTML = '<p>Loading…</p>';
 
-    publications = data.publications.map(p => ({
-        title: p.title,
-        authors: p.authors,
-        journal: p.journal,
-        year: Number(p.year),
-        citations: p.cited_by,
-        doi: p.doi
-    }));
+  const dois = await loadDOIs();
+  let html = '';
 
-    populateYearFilter();
-    applyFilters();
-    renderRecentPublications();
-    buildCoauthorGraph();
-}
-
-// Populate year dropdown dynamically
-function populateYearFilter() {
-    const years = [...new Set(publications.map(p => p.year))]
-        .sort((a, b) => b - a);
-
-    const yearFilter = document.getElementById("yearFilter");
-    years.forEach(y => {
-        const opt = document.createElement("option");
-        opt.value = y;
-        opt.textContent = y;
-        yearFilter.appendChild(opt);
-    });
-}
-
-// Render full publication list
-function renderPublications(list) {
-    const container = document.getElementById("pubList");
-    container.innerHTML = "";
-
-    list.forEach(pub => {
-        container.innerHTML += `
-            <div class="pub-card">
-                <h3>${pub.title}</h3>
-                <p><strong>Authors:</strong> ${pub.authors}</p>
-                <p><strong>Journal:</strong> ${pub.journal} (${pub.year})</p>
-                <p><span class="badge">Cited by ${pub.citations}</span></p>
-                ${pub.doi ? `<a href="https://doi.org/${pub.doi}" target="_blank">View DOI</a>` : `<em>No DOI available</em>`}
-            </div>
-        `;
-    });
-}
-
-// Render recent publications (top 5)
-function renderRecentPublications() {
-    const recent = [...publications]
-        .sort((a, b) => b.year - a.year)
-        .slice(0, 5);
-
-    const container = document.getElementById("recentPubs");
-    container.innerHTML = "";
-
-    recent.forEach(pub => {
-        container.innerHTML += `
-            <div class="pub-card">
-                <h3>${pub.title}</h3>
-                <p><strong>${pub.year}</strong> — ${pub.journal}</p>
-                <p><span class="badge">Cited by ${pub.citations}</span></p>
-                ${pub.doi ? `<a href="https://doi.org/${pub.doi}" target="_blank">View DOI</a>` : ""}
-            </div>
-        `;
-    });
-}
-
-// Apply sorting + filtering
-function applyFilters() {
-    let list = [...publications];
-
-    const sortMode = document.getElementById("sortMode").value;
-    if (sortMode === "year") list.sort((a,b) => b.year - a.year);
-    if (sortMode === "citations") list.sort((a,b) => b.citations - a.citations);
-    if (sortMode === "title") list.sort((a,b) => a.title.localeCompare(b.title));
-
-    const year = document.getElementById("yearFilter").value;
-    if (year !== "all") list = list.filter(p => p.year == year);
-
-    const keyword = document.getElementById("keywordFilter").value.toLowerCase();
-    if (keyword.length > 0) {
-        list = list.filter(p =>
-            p.title.toLowerCase().includes(keyword) ||
-            p.journal.toLowerCase().includes(keyword)
-        );
-    }
-
-    renderPublications(list);
-}
-
-// Co-author graph
-function buildCoauthorGraph() {
-    const container = document.getElementById("coauthorGraph");
-    if (!container) return;
-
-    const authors = {};
-    const links = [];
-
-    publications.forEach(pub => {
-        const coauthors = pub.authors.split(",").map(a => a.trim());
-
-        for (let i = 0; i < coauthors.length; i++) {
-            for (let j = i + 1; j < coauthors.length; j++) {
-                const a = coauthors[i];
-                const b = coauthors[j];
-
-                if (!authors[a]) authors[a] = { name: a };
-                if (!authors[b]) authors[b] = { name: b };
-
-                let link = links.find(l =>
-                    (l.source === a && l.target === b) ||
-                    (l.source === b && l.target === a)
-                );
-
-                if (link) link.weight += 1;
-                else links.push({ source: a, target: b, weight: 1 });
-            }
-        }
-    });
-
-    drawCoauthorGraph(Object.values(authors), links);
-}
-
-// Scholar metrics
-async function updateScholarMetrics() {
+  for (const doi of dois) {
     try {
-        const response = await fetch("/assets/data/scholar.json");
-        const data = await response.json();
-
-        if (data.metrics) {
-            document.getElementById("totalCitations").innerText = data.metrics.total_citations;
-            document.getElementById("hIndex").innerText = data.metrics.h_index;
-            document.getElementById("i10Index").innerText = data.metrics.i10_index;
-        }
-
-        if (data.metrics && data.metrics.citations_per_year) {
-            const yearly = Object.entries(data.metrics.citations_per_year)
-                .map(([year, citations]) => ({ year, citations }))
-                .sort((a, b) => a.year - b.year);
-
-            drawCitationsGraph(yearly);
-        }
-
-        document.getElementById("lastUpdated").innerText =
-            "Last updated: " + new Date().toLocaleString();
-
-    } catch (e) {
-        console.log("Metrics update failed:", e);
+      const meta = await fetchCrossRef(doi);
+      const citations = await fetchOpenAlex(doi);
+      html += renderPublication(meta, citations);
+    } catch (err) {
+      html += `<p>Error loading DOI ${doi}</p>`;
     }
+  }
+
+  container.innerHTML = html;
 }
 
-// Initialize
-document.addEventListener("DOMContentLoaded", () => {
-    loadPublications();
-    updateScholarMetrics();
-
-    document.getElementById("sortMode").onchange = applyFilters;
-    document.getElementById("yearFilter").onchange = applyFilters;
-    document.getElementById("keywordFilter").onkeyup = applyFilters;
-});
+loadPublications();
 </script>
+
+<style>
+.pub-card {
+  margin-bottom: 1.5rem;
+}
+</style>
