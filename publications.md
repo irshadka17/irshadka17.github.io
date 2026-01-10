@@ -383,7 +383,7 @@ async function loadCitationStats() {
   }
 }
 // ------------------------------
-// LOAD TEXT FILE + NUMBERING + CLEAN INDENTATION
+// LOAD TEXT FILE + NUMBERING + URL AUTO-LINKING
 // ------------------------------
 async function loadTextSection(url, elementId) {
   const container = document.getElementById(elementId);
@@ -431,14 +431,14 @@ async function loadTextSection(url, elementId) {
 
             <!-- Text column -->
             <div style="flex: 1;">
-              <div>${main}</div>
+              <div>${convertToLinks(main)}</div>
 
               ${
                 subs
                   .map(
                     sub => `
-                    <div style="margin-left: 20px;">
-                      ${sub}
+                    <div>
+                      ${convertToLinks(sub)}
                     </div>
                   `
                   )
@@ -457,6 +457,40 @@ async function loadTextSection(url, elementId) {
     container.innerHTML = "<p>Error loading section.</p>";
   }
 }
+
+// ------------------------------
+// Convert URLs and DOIs into styled clickable links
+// ------------------------------
+function convertToLinks(text) {
+  // Detect DOI patterns
+  const doiRegex = /\b10\.\d{4,9}\/[^\s]+/g;
+
+  // Detect normal URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  // Replace DOI with formatted link
+  text = text.replace(doiRegex, doi => {
+    const url = `https://doi.org/${doi}`;
+    return `
+      <a href="${url}" target="_blank" 
+         style="color:#0066cc; text-decoration:underline;">
+         DOI: ${doi} <span style="font-size:0.9em;">🔗</span>
+      </a>
+    `;
+  });
+
+  // Replace normal URLs with styled link + icon
+  text = text.replace(urlRegex, url => {
+    return `
+      <a href="${url}" target="_blank" 
+         style="color:#0066cc; text-decoration:underline;">
+         ${url} <span style="font-size:0.9em;">🔗</span>
+      </a>
+    `;
+  });
+
+  return text;
+}
 loadPublications();
 loadTextSection('{{ "/assets/conference_proceedings.txt" | relative_url }}', "conferenceProceedings");
 loadTextSection('{{ "/assets/conference_appearances.txt" | relative_url }}', "conferenceAppearances");  
@@ -471,6 +505,7 @@ loadCitationStats();
   padding: 4px 8px;
 }
 </style>
+
 
 
 
