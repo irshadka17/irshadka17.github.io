@@ -1,10 +1,11 @@
 ---
 layout: default
-title: Co-authors
+title: Scientific collaboration
 ---
 
-## Co-author Network
+## Scientific collaboration
 
 <p>This graph shows my collaboration network based on all publications in the database.</p>
 
 <div id="coauthorGraph"></div>
+
