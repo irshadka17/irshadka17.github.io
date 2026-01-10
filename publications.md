@@ -12,8 +12,20 @@ Update assets/dois.txt to add new papers.
 -->
 
 <!-- Citation Timeline at Top -->
-<div style="margin-bottom: 3rem; width: 50%; min-width: 300px;">
-  <canvas id="citationChart"></canvas>
+<div style="display: flex; gap: 20px; margin-bottom: 3rem;">
+
+  <!-- Left: Chart -->
+  <div style="width: 50%; min-width: 300px;">
+    <canvas id="citationChart"></canvas>
+  </div>
+
+  <!-- Right: Stats Table -->
+  <div style="width: 50%; min-width: 300px;">
+    <table id="citationStatsTable" style="width: 100%; border-collapse: collapse;">
+      <!-- JS will fill this -->
+    </table>
+  </div>
+
 </div>
 
 <!-- Controls -->
@@ -307,7 +319,38 @@ document.getElementById('yearFilter').addEventListener('change', applyFilters);
 document.getElementById('searchInput').addEventListener('input', applyFilters);
 document.getElementById('sortSelect').addEventListener('change', applyFilters);
 
+// ------------------------------
+// LOAD CITATION STATS TABLE
+// ------------------------------
+async function loadCitationStats() {
+  const table = document.getElementById("citationStatsTable");
+
+  try {
+    const response = await fetch('{{ "/assets/citation_stats.txt" | relative_url }}');
+    const text = await response.text();
+
+    const rows = text
+      .split("\n")
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => line.split(/[:,]/)); // supports "A: B" or "A,B"
+
+    table.innerHTML = rows
+      .map(([label, value]) => `
+        <tr>
+          <td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #ddd;">${label}</td>
+          <td style="padding: 6px; border-bottom: 1px solid #ddd;">${value}</td>
+        </tr>
+      `)
+      .join("");
+
+  } catch (err) {
+    table.innerHTML = "<tr><td>Error loading stats</td></tr>";
+  }
+}
+  
 loadPublications();
+loadCitationStats();  
 </script>
 
 <style>
@@ -318,4 +361,5 @@ loadPublications();
   padding: 4px 8px;
 }
 </style>
+
 
