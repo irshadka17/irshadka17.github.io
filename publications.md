@@ -8,12 +8,49 @@ title: Publications
 <p>This page loads publication metadata directly from DOIs.  
 Update <code>assets/dois.txt</code> to add new papers.</p>
 
+<!-- Search + Filters + Sort Controls -->
+<div id="controls" style="margin-bottom: 1.5rem;">
+
+  <!-- Search -->
+  <label><strong>Search:</strong></label>
+  <input type="text" id="searchInput" placeholder="Search title, author, journal…" style="padding: 4px 8px; width: 250px;">
+
+  <!-- Year Filter -->
+  <label style="margin-left: 1rem;"><strong>Year:</strong></label>
+  <select id="yearFilter">
+    <option value="all">All Years</option>
+  </select>
+
+  <!-- Citation Filter -->
+  <label style="margin-left: 1rem;"><strong>Citations:</strong></label>
+  <select id="citationFilter">
+    <option value="all">All</option>
+    <option value="0-10">0–10</option>
+    <option value="10-50">10–50</option>
+    <option value="50-100">50–100</option>
+    <option value="100-500">100–500</option>
+    <option value="500+">500+</option>
+  </select>
+
+  <!-- Sort -->
+  <label style="margin-left: 1rem;"><strong>Sort by:</strong></label>
+  <select id="sortSelect">
+    <option value="year-desc">Year (newest first)</option>
+    <option value="year-asc">Year (oldest first)</option>
+    <option value="citations-desc">Citations (high → low)</option>
+    <option value="citations-asc">Citations (low → high)</option>
+    <option value="title-asc">Title (A → Z)</option>
+    <option value="title-desc">Title (Z → A)</option>
+  </select>
+
+</div>
+
 <div id="pub-container">
   <p>Loading publications…</p>
 </div>
 
 <script>
-// Load DOI list from your site (never navigates away)
+// Load DOI list
 async function loadDOIs() {
   const response = await fetch('{{ "/assets/dois.txt" | relative_url }}');
   const text = await response.text();
@@ -35,27 +72,68 @@ async function fetchOpenAlex(doi) {
   return data.cited_by_count || 0;
 }
 
+let publications = []; // store all publications
+
 // Render publication card
-function renderPublication(meta, citations) {
-  const authors = meta.author
-    ? meta.author.map(a => `${a.given} ${a.family}`).join(', ')
-    : 'Unknown authors';
-
-  const title = meta.title ? meta.title[0] : 'Untitled';
-  const journal = meta['container-title'] ? meta['container-title'][0] : 'Unknown journal';
-  const year = meta.issued ? meta.issued['date-parts'][0][0] : '—';
-  const doi = meta.DOI;
-
+function renderPublication(pub) {
   return `
-    <div class="pub-card">
-      <h3>${title}</h3>
-      <p><strong>Authors:</strong> ${authors}</p>
-      <p><strong>Journal:</strong> ${journal} (${year})</p>
-      <p><strong>Citations:</strong> ${citations}</p>
-      <p><a href="https://doi.org/${doi}" target="_blank">DOI: ${doi}</a></p>
+    <div class="pub-card" data-year="${pub.year}" data-citations="${pub.citations}">
+      <h3>${pub.title}</h3>
+      <p><strong>Authors:</strong> ${pub.authors}</p>
+      <p><strong>Journal:</strong> ${pub.journal} (${pub.year})</p>
+      <p><strong>Citations:</strong> ${pub.citations}</p>
+      <p><a href="https://doi.org/${pub.doi}" target="_blank">DOI: ${pub.doi}</a></p>
     </div>
     <hr>
   `;
+}
+
+// Apply all filters + search + sort
+function applyFilters() {
+  const yearValue = document.getElementById('yearFilter').value;
+  const citationValue = document.getElementById('citationFilter').value;
+  const searchValue = document.getElementById('searchInput').value.toLowerCase();
+  const sortValue = document.getElementById('sortSelect').value;
+
+  let filtered = publications.filter(pub => {
+    // Year filter
+    const yearMatch = (yearValue === 'all' || pub.year == yearValue);
+
+    // Citation filter
+    let citationMatch = true;
+    if (citationValue !== 'all') {
+      if (citationValue.endsWith('+')) {
+        citationMatch = pub.citations >= parseInt(citationValue);
+      } else {
+        const [min, max] = citationValue.split('-');
+        citationMatch = pub.citations >= parseInt(min) && pub.citations <= parseInt(max);
+      }
+    }
+
+    // Search filter
+    const searchMatch =
+      pub.title.toLowerCase().includes(searchValue) ||
+      pub.authors.toLowerCase().includes(searchValue) ||
+      pub.journal.toLowerCase().includes(searchValue);
+
+    return yearMatch && citationMatch && searchMatch;
+  });
+
+  // Sorting
+  filtered.sort((a, b) => {
+    switch (sortValue) {
+      case 'year-desc': return b.year - a.year;
+      case 'year-asc': return a.year - b.year;
+      case 'citations-desc': return b.citations - a.citations;
+      case 'citations-asc': return a.citations - b.citations;
+      case 'title-asc': return a.title.localeCompare(b.title);
+      case 'title-desc': return b.title.localeCompare(a.title);
+    }
+  });
+
+  // Render
+  const container = document.getElementById('pub-container');
+  container.innerHTML = filtered.map(renderPublication).join('');
 }
 
 // Main loader
@@ -64,20 +142,54 @@ async function loadPublications() {
   container.innerHTML = '<p>Loading…</p>';
 
   const dois = await loadDOIs();
-  let html = '';
+  publications = [];
+
+  const years = new Set();
 
   for (const doi of dois) {
     try {
       const meta = await fetchCrossRef(doi);
       const citations = await fetchOpenAlex(doi);
-      html += renderPublication(meta, citations);
+
+      const authors = meta.author
+        ? meta.author.map(a => `${a.given} ${a.family}`).join(', ')
+        : 'Unknown authors';
+
+      const title = meta.title ? meta.title[0] : 'Untitled';
+      const journal = meta['container-title'] ? meta['container-title'][0] : 'Unknown journal';
+      const year = meta.issued ? meta.issued['date-parts'][0][0] : '—';
+
+      years.add(year);
+
+      publications.push({
+        title,
+        authors,
+        journal,
+        year,
+        citations,
+        doi
+      });
+
     } catch (err) {
-      html += `<p>Error loading DOI ${doi}</p>`;
+      container.innerHTML += `<p>Error loading DOI ${doi}</p>`;
     }
   }
 
-  container.innerHTML = html;
+  // Populate year dropdown
+  const yearFilter = document.getElementById('yearFilter');
+  [...years].sort((a, b) => b - a).forEach(y => {
+    yearFilter.innerHTML += `<option value="${y}">${y}</option>`;
+  });
+
+  // Initial render
+  applyFilters();
 }
+
+// Event listeners
+document.getElementById('yearFilter').addEventListener('change', applyFilters);
+document.getElementById('citationFilter').addEventListener('change', applyFilters);
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('sortSelect').addEventListener('change', applyFilters);
 
 loadPublications();
 </script>
@@ -86,5 +198,7 @@ loadPublications();
 .pub-card {
   margin-bottom: 1.5rem;
 }
+#controls select, #controls input {
+  padding: 4px 8px;
+}
 </style>
-
