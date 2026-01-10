@@ -11,49 +11,40 @@ This page loads publication metadata directly from DOIs.
 Update assets/dois.txt to add new papers.
 -->
 
-<!-- Two-column layout -->
-<div id="pub-layout" style="display: flex; gap: 2rem; align-items: flex-start;">
+<!-- Controls -->
+<div id="controls" style="margin-bottom: 1.5rem;">
 
-  <!-- LEFT COLUMN: Publications -->
-  <div id="pub-left" style="flex: 3; min-width: 300px;">
+  <!-- Search -->
+  <label><strong>Search:</strong></label>
+  <input type="text" id="searchInput" placeholder="Search title, author, journal…" style="padding: 4px 8px; width: 250px;">
 
-    <!-- Search + Filters + Sort Controls -->
-    <div id="controls" style="margin-bottom: 1.5rem;">
+  <!-- Year Filter -->
+  <label style="margin-left: 1rem;"><strong>Year:</strong></label>
+  <select id="yearFilter">
+    <option value="all">All Years</option>
+  </select>
 
-      <!-- Search -->
-      <label><strong>Search:</strong></label>
-      <input type="text" id="searchInput" placeholder="Search title, author, journal…" style="padding: 4px 8px; width: 250px;">
+  <!-- Sort -->
+  <label style="margin-left: 1rem;"><strong>Sort by:</strong></label>
+  <select id="sortSelect">
+    <option value="year-desc">Year (newest first)</option>
+    <option value="year-asc">Year (oldest first)</option>
+    <option value="citations-desc">Citations (high → low)</option>
+    <option value="citations-asc">Citations (low → high)</option>
+    <option value="title-asc">Title (A → Z)</option>
+    <option value="title-desc">Title (Z → A)</option>
+  </select>
 
-      <!-- Year Filter -->
-      <label style="margin-left: 1rem;"><strong>Year:</strong></label>
-      <select id="yearFilter">
-        <option value="all">All Years</option>
-      </select>
+</div>
 
-      <!-- Sort -->
-      <label style="margin-left: 1rem;"><strong>Sort by:</strong></label>
-      <select id="sortSelect">
-        <option value="year-desc">Year (newest first)</option>
-        <option value="year-asc">Year (oldest first)</option>
-        <option value="citations-desc">Citations (high → low)</option>
-        <option value="citations-asc">Citations (low → high)</option>
-        <option value="title-asc">Title (A → Z)</option>
-        <option value="title-desc">Title (Z → A)</option>
-      </select>
+<!-- Publications -->
+<div id="pub-container">
+  <p>Loading publications…</p>
+</div>
 
-    </div>
-
-    <div id="pub-container">
-      <p>Loading publications…</p>
-    </div>
-
-  </div>
-
-  <!-- RIGHT COLUMN: Citation Timeline -->
-  <div id="pub-right" style="flex: 2; min-width: 250px;">
-    <canvas id="citationChart"></canvas>
-  </div>
-
+<!-- Citation Timeline -->
+<div style="margin-top: 3rem;">
+  <canvas id="citationChart"></canvas>
 </div>
 
 <!-- Chart.js -->
@@ -85,8 +76,8 @@ async function fetchOpenAlex(doi) {
   };
 }
 
-let publications = []; // store all publications
-let citationHistory = {}; // year → total citations
+let publications = [];
+let citationHistory = {};
 
 // Render publication card
 function renderPublication(pub) {
@@ -240,10 +231,5 @@ loadPublications();
 }
 #controls select, #controls input {
   padding: 4px 8px;
-}
-@media (max-width: 900px) {
-  #pub-layout {
-    flex-direction: column;
-  }
 }
 </style>
