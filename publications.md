@@ -11,6 +11,11 @@ This page loads publication metadata directly from DOIs.
 Update assets/dois.txt to add new papers.
 -->
 
+<!-- Citation Timeline at Top -->
+<div style="margin-bottom: 3rem;">
+  <canvas id="citationChart"></canvas>
+</div>
+
 <!-- Controls -->
 <div id="controls" style="margin-bottom: 1.5rem;">
 
@@ -42,30 +47,78 @@ Update assets/dois.txt to add new papers.
   <p>Loading publications…</p>
 </div>
 
-<!-- Citation Timeline -->
-<div style="margin-top: 3rem;">
-  <canvas id="citationChart"></canvas>
-</div>
-
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// Load DOI list
+// ------------------------------
+// CONFIG
+// ------------------------------
+const CACHE_DURATION_HOURS = 24; // cache expires after 24 hours
+
+// ------------------------------
+// CACHE HELPERS
+// ------------------------------
+function getCacheKey(doi) {
+  return `pubcache_${doi}`;
+}
+
+function loadFromCache(doi) {
+  const key = getCacheKey(doi);
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+
+  try {
+    const data = JSON.parse(raw);
+    const ageHours = (Date.now() - data.timestamp) / (1000 * 60 * 60);
+    if (ageHours > CACHE_DURATION_HOURS) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function saveToCache(doi, crossref, openalex) {
+  const key = getCacheKey(doi);
+  localStorage.setItem(key, JSON.stringify({
+    crossref,
+    openalex,
+    timestamp: Date.now()
+  }));
+}
+
+// ------------------------------
+// API FETCHERS WITH CACHING
+// ------------------------------
+async function fetchPublicationData(doi) {
+  const cached = loadFromCache(doi);
+  if (cached) return cached;
+
+  const crossref = await fetchCrossRef(doi);
+  const openalex = await fetchOpenAlex(doi);
+
+  saveToCache(doi, crossref, openalex);
+  return { crossref, openalex };
+}
+
+// ------------------------------
+// RAW API CALLS
+// ------------------------------
 async function loadDOIs() {
   const response = await fetch('{{ "/assets/dois.txt" | relative_url }}');
   const text = await response.text();
   return text.split('\n').map(d => d.trim()).filter(d => d.length > 0);
 }
 
-// Fetch metadata from CrossRef
 async function fetchCrossRef(doi) {
   const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
   const response = await fetch(url);
   return (await response.json()).message;
 }
 
-// Fetch citation count + history from OpenAlex
 async function fetchOpenAlex(doi) {
   const url = `https://api.openalex.org/works/doi:${encodeURIComponent(doi)}`;
   const response = await fetch(url);
@@ -76,13 +129,15 @@ async function fetchOpenAlex(doi) {
   };
 }
 
+// ------------------------------
+// RENDERING + FILTERING
+// ------------------------------
 let publications = [];
 let citationHistory = {};
 
-// Render publication card
 function renderPublication(pub) {
   return `
-    <div class="pub-card" data-year="${pub.year}" data-citations="${pub.citations}">
+    <div class="pub-card">
       <h3>${pub.title}</h3>
       <p><strong>Authors:</strong> ${pub.authors}</p>
       <p><strong>Journal:</strong> ${pub.journal} (${pub.year})</p>
@@ -96,7 +151,6 @@ function renderPublication(pub) {
   `;
 }
 
-// Apply search + year filter + sort
 function applyFilters() {
   const yearValue = document.getElementById('yearFilter').value;
   const searchValue = document.getElementById('searchInput').value.toLowerCase();
@@ -122,11 +176,13 @@ function applyFilters() {
     }
   });
 
-  const container = document.getElementById('pub-container');
-  container.innerHTML = filtered.map(renderPublication).join('');
+  document.getElementById('pub-container').innerHTML =
+    filtered.map(renderPublication).join('');
 }
 
-// Draw citation timeline
+// ------------------------------
+// CHART
+// ------------------------------
 function drawCitationChart() {
   const ctx = document.getElementById('citationChart').getContext('2d');
 
@@ -148,14 +204,16 @@ function drawCitationChart() {
     options: {
       plugins: { legend: { display: false } },
       scales: {
-        x: { title: { display: false } },
-        y: { title: { display: false }, beginAtZero: true }
+        x: { title: { display: true, text: 'Year' }},
+        y: { title: { display: true, text: 'Citations per Year' }, beginAtZero: true }
       }
     }
   });
 }
 
-// Main loader
+// ------------------------------
+// MAIN LOADER
+// ------------------------------
 async function loadPublications() {
   const container = document.getElementById('pub-container');
   container.innerHTML = '<p>Loading…</p>';
@@ -167,19 +225,18 @@ async function loadPublications() {
 
   for (const doi of dois) {
     try {
-      const meta = await fetchCrossRef(doi);
-      const openalex = await fetchOpenAlex(doi);
+      const { crossref, openalex } = await fetchPublicationData(doi);
 
-      const authors = meta.author
-        ? meta.author.map(a => `${a.given} ${a.family}`).join(', ')
+      const authors = crossref.author
+        ? crossref.author.map(a => `${a.given} ${a.family}`).join(', ')
         : 'Unknown authors';
 
-      const title = meta.title ? meta.title[0] : 'Untitled';
-      const journal = meta['container-title'] ? meta['container-title'][0] : 'Unknown journal';
-      const year = meta.issued ? meta.issued['date-parts'][0][0] : '—';
-      const volume = meta.volume || '';
-      const issue = meta.issue || '';
-      const pages = meta.page || '';
+      const title = crossref.title ? crossref.title[0] : 'Untitled';
+      const journal = crossref['container-title'] ? crossref['container-title'][0] : 'Unknown journal';
+      const year = crossref.issued ? crossref.issued['date-parts'][0][0] : '—';
+      const volume = crossref.volume || '';
+      const issue = crossref.issue || '';
+      const pages = crossref.page || '';
 
       years.add(year);
 
@@ -195,7 +252,6 @@ async function loadPublications() {
         doi
       });
 
-      // Aggregate citation history
       openalex.history.forEach(entry => {
         const y = entry.year;
         const c = entry.cited_by_count;
@@ -207,7 +263,6 @@ async function loadPublications() {
     }
   }
 
-  // Populate year dropdown
   const yearFilter = document.getElementById('yearFilter');
   [...years].sort((a, b) => b - a).forEach(y => {
     yearFilter.innerHTML += `<option value="${y}">${y}</option>`;
@@ -217,7 +272,9 @@ async function loadPublications() {
   drawCitationChart();
 }
 
-// Event listeners
+// ------------------------------
+// EVENT LISTENERS
+// ------------------------------
 document.getElementById('yearFilter').addEventListener('change', applyFilters);
 document.getElementById('searchInput').addEventListener('input', applyFilters);
 document.getElementById('sortSelect').addEventListener('change', applyFilters);
