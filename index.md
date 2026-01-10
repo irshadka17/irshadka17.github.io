@@ -204,8 +204,8 @@ loadRecentPublications();
     </li>
     
     <li>
-      <span class="icon">🐙</span>
-      <a href="{{ site.googlescholar }}" target="_blank">GoogleScholar</a>
+      <span class="icon">📚</span>
+      <a href="{{ site.googlescholar }}" target="_blank">Google Scholar</a>
     </li>
     
     <li>
@@ -229,6 +229,7 @@ loadRecentPublications();
   </div> <!-- END RIGHT COLUMN -->
 
 </div> <!-- END TWO COLUMN -->
+
 
 
 
