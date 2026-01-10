@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Publications
 ---
 
@@ -87,3 +87,4 @@ loadPublications();
   margin-bottom: 1.5rem;
 }
 </style>
+
