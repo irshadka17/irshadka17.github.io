@@ -6,16 +6,16 @@ title: Publications
 # Publications
 
 <p>This page loads publication metadata directly from DOIs.  
-Update <code>dois.txt</code> to add new papers.</p>
+Update <code>assets/dois.txt</code> to add new papers.</p>
 
 <div id="pub-container">
   <p>Loading publications…</p>
 </div>
 
 <script>
-// Load DOI list
+// Load DOI list from your site (never navigates away)
 async function loadDOIs() {
-  const response = await fetch('/assets/dois.txt');
+  const response = await fetch('{{ "/assets/dois.txt" | relative_url }}');
   const text = await response.text();
   return text.split('\n').map(d => d.trim()).filter(d => d.length > 0);
 }
@@ -24,8 +24,7 @@ async function loadDOIs() {
 async function fetchCrossRef(doi) {
   const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
   const response = await fetch(url);
-  const data = await response.json();
-  return data.message;
+  return (await response.json()).message;
 }
 
 // Fetch citation count from OpenAlex
