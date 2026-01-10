@@ -202,7 +202,12 @@ loadRecentPublications();
       <span class="icon">🐙</span>
       <a href="{{ site.github }}" target="_blank">GitHub</a>
     </li>
-
+    
+    <li>
+      <span class="icon">🐙</span>
+      <a href="{{ site.googlescholar }}" target="_blank">GoogleScholar</a>
+    </li>
+    
     <li>
       <span class="icon">🔗</span>
       <a href="{{ site.linkedin }}" target="_blank">LinkedIn</a>
@@ -224,5 +229,6 @@ loadRecentPublications();
   </div> <!-- END RIGHT COLUMN -->
 
 </div> <!-- END TWO COLUMN -->
+
 
 
