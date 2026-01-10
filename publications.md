@@ -383,7 +383,7 @@ async function loadCitationStats() {
   }
 }
 // ------------------------------
-// LOAD TEXT FILE INTO A DIV
+// LOAD TEXT FILE + NUMBERING + INDENTATION
 // ------------------------------
 async function loadTextSection(url, elementId) {
   const container = document.getElementById(elementId);
@@ -392,19 +392,71 @@ async function loadTextSection(url, elementId) {
     const response = await fetch(url);
     const text = await response.text();
 
-    // Convert line breaks to <br>
-    const html = text
+    const rawLines = text
       .split("\n")
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .join("<br>");
+      .map(line => line.replace(/\r/g, "").trimEnd())
+      .filter(line => line.length > 0);
+
+    let entries = [];
+    let current = [];
+
+    rawLines.forEach(line => {
+      // Continuation line if starts with "-", tab, or leading spaces
+      if (/^[-\t ]/.test(line)) {
+        current.push(line.trim());
+      } else {
+        if (current.length > 0) entries.push(current);
+        current = [line.trim()];
+      }
+    });
+
+    if (current.length > 0) entries.push(current);
+
+    const html = entries
+      .map((entry, index) => {
+        const main = entry[0];
+        const subs = entry.slice(1);
+
+        return `
+          <div style="display: flex; gap: 12px; margin-bottom: 10px;">
+            
+            <!-- Number column -->
+            <div style="
+              width: 32px;
+              text-align: right;
+              font-weight: bold;
+            ">
+              ${index + 1}.
+            </div>
+
+            <!-- Text column -->
+            <div style="flex: 1;">
+              <div>${main}</div>
+
+              ${
+                subs
+                  .map(
+                    sub => `
+                    <div style="margin-left: 20px; color: #444;">
+                      • ${sub}
+                    </div>
+                  `
+                  )
+                  .join("")
+              }
+            </div>
+
+          </div>
+        `;
+      })
+      .join("");
 
     container.innerHTML = html;
 
   } catch (err) {
     container.innerHTML = "<p>Error loading section.</p>";
   }
-}  
+}
 loadPublications();
 loadTextSection('{{ "/assets/conference_proceedings.txt" | relative_url }}', "conferenceProceedings");
 loadTextSection('{{ "/assets/conference_appearances.txt" | relative_url }}', "conferenceAppearances");  
@@ -419,6 +471,7 @@ loadCitationStats();
   padding: 4px 8px;
 }
 </style>
+
 
 
 
